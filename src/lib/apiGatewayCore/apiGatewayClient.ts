@@ -13,43 +13,62 @@
  * permissions and limitations under the License.
  */
 
-import utils from './utils';
-import sigV4ClientFactory from './sigV4Client.js';
-import simpleHttpClientFactory from './simpleHttpClient.js';
+import utils from "./utils";
+import sigV4ClientFactory from "./sigV4Client.js";
+import simpleHttpClientFactory from "./simpleHttpClient.js";
 
 const apiGatewayClientFactory = {};
-apiGatewayClientFactory.newClient = function(simpleHttpClientConfig, sigV4ClientConfig) {
-  let apiGatewayClient = { };
+apiGatewayClientFactory.newClient = function (
+  simpleHttpClientConfig,
+  sigV4ClientConfig
+) {
+  let apiGatewayClient = {};
   // Spin up 2 httpClients, one for simple requests, one for SigV4
   let sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
-  let simpleHttpClient = simpleHttpClientFactory.newClient(simpleHttpClientConfig);
+  let simpleHttpClient = simpleHttpClientFactory.newClient(
+    simpleHttpClientConfig
+  );
 
-  apiGatewayClient.makeRequest = function(request, authType, additionalParams, apiKey) {
+  apiGatewayClient.makeRequest = function (
+    request,
+    authType,
+    additionalParams,
+    apiKey
+  ) {
     // Default the request to use the simple http client
     let clientToUse = simpleHttpClient;
 
     // Attach the apiKey to the headers request if one was provided
-    if (apiKey !== undefined && apiKey !== '' && apiKey !== null) {
-      request.headers['x-api-key'] = apiKey;
+    if (apiKey !== undefined && apiKey !== "" && apiKey !== null) {
+      request.headers["x-api-key"] = apiKey;
     }
 
     if (
-      request.body === undefined
-      || request.body === ''
-      || request.body === null
-      || Object.keys(request.body).length === 0
+      request.body === undefined ||
+      request.body === "" ||
+      request.body === null ||
+      Object.keys(request.body).length === 0
     ) {
       request.body = undefined;
     }
 
     // If the user specified any additional headers or query params that may not have been modeled
     // merge them into the appropriate request properties
-    request.headers = utils.mergeInto(request.headers, additionalParams.headers);
-    request.queryParams = utils.mergeInto(request.queryParams, additionalParams.queryParams);
-    request.timeout = utils.mergeInto(request.timeout, additionalParams.timeout);
+    request.headers = utils.mergeInto(
+      request.headers,
+      additionalParams.headers
+    );
+    request.queryParams = utils.mergeInto(
+      request.queryParams,
+      additionalParams.queryParams
+    );
+    request.timeout = utils.mergeInto(
+      request.timeout,
+      additionalParams.timeout
+    );
 
     // If an auth type was specified inject the appropriate auth client
-    if (authType === 'AWS_IAM') {
+    if (authType === "AWS_IAM") {
       clientToUse = sigV4Client;
     }
 
