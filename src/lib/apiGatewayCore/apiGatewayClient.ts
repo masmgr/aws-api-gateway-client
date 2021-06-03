@@ -13,28 +13,25 @@
  * permissions and limitations under the License.
  */
 
-import utils from "./utils";
+import { utils} from "./utils";
 import sigV4ClientFactory from "./sigV4Client.js";
 import simpleHttpClientFactory from "./simpleHttpClient.js";
 
-const apiGatewayClientFactory = {};
-apiGatewayClientFactory.newClient = function (
-  simpleHttpClientConfig,
-  sigV4ClientConfig
-) {
-  let apiGatewayClient = {};
-  // Spin up 2 httpClients, one for simple requests, one for SigV4
-  let sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
-  let simpleHttpClient = simpleHttpClientFactory.newClient(
-    simpleHttpClientConfig
-  );
+class apiGatewayClientFactory {
+  apiGatewayClient: any;
+  sigV4Client: any;
+  simpleHttpClient: any;
 
-  apiGatewayClient.makeRequest = function (
-    request,
-    authType,
-    additionalParams,
-    apiKey
-  ) {
+  newClient(simpleHttpClientConfig: any, sigV4ClientConfig: any) {
+    apiGatewayClient = {};
+    sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
+    simpleHttpClient = simpleHttpClientFactory.newClient(
+      simpleHttpClientConfig
+    );
+  }
+}
+
+  makeRequest(request: any, authType: any, additionalParams: any, apiKey: any) {
     // Default the request to use the simple http client
     let clientToUse = simpleHttpClient;
 
@@ -75,8 +72,4 @@ apiGatewayClientFactory.newClient = function (
     // Call the selected http client to make the request,
     // returning a promise once the request is sent
     return clientToUse.makeRequest(request);
-  };
-  return apiGatewayClient;
-};
-
-export default apiGatewayClientFactory;
+  }

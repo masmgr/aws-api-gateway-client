@@ -18,7 +18,7 @@ import apiGatewayClientFactory from "./lib/apiGatewayCore/apiGatewayClient";
 
 const apigClientFactory = {};
 
-const removeEmpty = (obj) => {
+const removeEmpty = (obj: any) => {
   Object.keys(obj).forEach(
     (key) =>
       (obj[key] && typeof obj[key] === "object" && removeEmpty(obj[key])) ||

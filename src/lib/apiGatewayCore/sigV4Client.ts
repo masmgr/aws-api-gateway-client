@@ -19,27 +19,27 @@ import SHA256 from "crypto-js/sha256";
 import encHex from "crypto-js/enc-hex";
 import HmacSHA256 from "crypto-js/hmac-sha256";
 import urlParser from "url";
-import utils from "./utils";
+import { utils} from "./utils";
 
 const sigV4ClientFactory = {};
-sigV4ClientFactory.newClient = function (config) {
-  let AWS_SHA_256 = "AWS4-HMAC-SHA256";
-  let AWS4_REQUEST = "aws4_request";
-  let AWS4 = "AWS4";
-  let X_AMZ_DATE = "x-amz-date";
-  let X_AMZ_SECURITY_TOKEN = "x-amz-security-token";
-  let HOST = "host";
-  let AUTHORIZATION = "Authorization";
+sigV4ClientFactory.newClient = function (config: any) {
+  const AWS_SHA_256 = "AWS4-HMAC-SHA256";
+  const AWS4_REQUEST = "aws4_request";
+  const AWS4 = "AWS4";
+  const X_AMZ_DATE = "x-amz-date";
+  const X_AMZ_SECURITY_TOKEN = "x-amz-security-token";
+  const HOST = "host";
+  const AUTHORIZATION = "Authorization";
 
-  function hash(value) {
+  function hash(value: string) {
     return SHA256(value); // eslint-disable-line
   }
 
-  function hexEncode(value) {
+  function hexEncode(value: any) {
     return value.toString(encHex);
   }
 
-  function hmac(secret, value) {
+  function hmac(secret: string, value: string) {
     return HmacSHA256(value, secret, { asBytes: true }); // eslint-disable-line
   }
 

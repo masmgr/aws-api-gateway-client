@@ -13,15 +13,15 @@
  * permissions and limitations under the License.
  */
 
-const utils = {
-  assertDefined: function (object: any, name: any) {
+export class utils {
+  static assertDefined(object: any, name: any) {
     if (object === undefined) {
       throw new Error(`${name} must be defined`);
     } else {
       return object;
     }
-  },
-  assertParametersDefined: function (params: any, keys: any, ignore: any) {
+  }
+  static assertParametersDefined(params: any, keys: any, ignore: any) {
     if (keys === undefined) {
       return;
     }
@@ -33,18 +33,18 @@ const utils = {
         utils.assertDefined(params[key], key);
       }
     }
-  },
-  parseParametersToObject: function (params: any, keys: any) {
+  }
+  static parseParametersToObject(params: any, keys: string[]) {
     if (params === undefined) {
       return {};
     }
-    let object = {};
+    let object: { [name: string]: any } = {};
     for (let key of keys) {
       object[key] = params[key];
     }
     return object;
-  },
-  contains: function (a: any, obj: any) {
+  }
+  static contains(a: any, obj: any) {
     if (a === undefined) {
       return false;
     }
@@ -55,36 +55,32 @@ const utils = {
       }
     }
     return false;
-  },
-  copy: function (obj: any) {
+  }
+  static copy(obj: any) {
     if (null === obj || "object" !== typeof obj) return obj;
-    let Buffer = require("buffer").Buffer;
+    const Buffer = require("buffer").Buffer;
     if (Buffer.isBuffer(obj)) return Buffer.from(obj);
-    let copy = obj.constructor();
-    let attr = null;
-    for (attr in obj) {
+    const copy = obj.constructor();
+    for (const attr in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, attr))
         copy[attr] = obj[attr];
     }
     return copy;
-  },
-  mergeInto: function (baseObj: any, additionalProps: any) {
+  }
+  static mergeInto(baseObj: any, additionalProps: any) {
     if (null === baseObj || "object" !== typeof baseObj) return baseObj;
-    let merged = baseObj.constructor();
-    let attr = null;
-    for (attr in baseObj) {
+    const merged = baseObj.constructor();
+    for (const attr in baseObj) {
       if (Object.prototype.hasOwnProperty.call(baseObj, attr))
         merged[attr] = baseObj[attr];
     }
     if (null == additionalProps || "object" != typeof additionalProps)
       return baseObj;
-    for (attr in additionalProps) {
+    for (const attr in additionalProps) {
       if (Object.prototype.hasOwnProperty.call(additionalProps, attr)) {
         merged[attr] = additionalProps[attr];
       }
     }
     return merged;
-  },
-};
-
-export default utils;
+  }
+}
