@@ -2,71 +2,78 @@
 [![Build Status](https://travis-ci.org/kndt84/aws-api-gateway-client.svg?branch=master)](https://travis-ci.org/kndt84/aws-api-gateway-client)
 [![npm](https://img.shields.io/npm/dm/aws-api-gateway-client.svg)](https://www.npmjs.com/package/aws-api-gateway-client)
 
-
 # Overview
+
 A module for AWS API gateway client based on auto-generated JavaScript SDK. This module can be used not only for Node.js but for front-end. In addition, it generalizes original SDK's endpoint specific methods.
 
 Reference:
 https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-generate-sdk.html
 
 # Prerequisites
+
 For the JavaScript SDK to work your APIs need to support CORS. The Amazon API Gateway developer guide explains how to [setup CORS for an endpoint](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-cors.html).
 
 # Install
-```
+
+```ts
 npm install aws-api-gateway-client
 ```
 
 # Use the SDK in your project
 
 Require module
-```
-var apigClientFactory = require('aws-api-gateway-client').default;
+
+```ts
+var apigClientFactory = require("aws-api-gateway-client").default;
 ```
 
 Set invokeUrl to config and create a client. For authorization, additional information is required as explained below.
-```
-config = {invokeUrl:'https://xxxxx.execute-api.us-east-1.amazonaws.com'}
+
+```ts
+config = { invokeUrl: "https://xxxxx.execute-api.us-east-1.amazonaws.com" };
 var apigClient = apigClientFactory.newClient(config);
 ```
 
 Calls to an API take the form outlined below. Each API call returns a promise, that invokes either a success and failure callback
 
-```
+```ts
 var pathParams = {
-    //This is where path request params go.
-    userId: '1234',
+  //This is where path request params go.
+  userId: "1234",
 };
 // Template syntax follows url-template https://www.npmjs.com/package/url-template
-var pathTemplate = '/users/{userID}/profile'
-var method = 'GET';
+var pathTemplate = "/users/{userID}/profile";
+var method = "GET";
 var additionalParams = {
-    //If there are query parameters or headers that need to be sent with the request you can add them here
-    headers: {
-        param0: '',
-        param1: ''
-    },
-    queryParams: {
-        param0: '',
-        param1: ''
-    }
+  //If there are query parameters or headers that need to be sent with the request you can add them here
+  headers: {
+    param0: "",
+    param1: "",
+  },
+  queryParams: {
+    param0: "",
+    param1: "",
+  },
 };
 var body = {
-    //This is where you define the body of the request
+  //This is where you define the body of the request
 };
 
-apigClient.invokeApi(pathParams, pathTemplate, method, additionalParams, body)
-    .then(function(result){
-        //This is where you would put a success callback
-    }).catch( function(result){
-        //This is where you would put an error callback
-    });
+apigClient
+  .invokeApi(pathParams, pathTemplate, method, additionalParams, body)
+  .then(function (result) {
+    //This is where you would put a success callback
+  })
+  .catch(function (result) {
+    //This is where you would put an error callback
+  });
 ```
 
 # Using AWS IAM for authorization
-To initialize the SDK with AWS Credentials use the code below. Note, if you use credentials all requests to the API will be signed. This means you will have to set the appropriate CORS accept-* headers for each request.
 
-```
+To initialize the SDK with AWS Credentials use the code below. Note, if you use credentials all requests to the API will be signed. This means you will have to set the appropriate CORS accept-\* headers for each request.
+
+```ts
 var apigClient = apigClientFactory.newClient({
     invokeUrl:'https://xxxxx.execute-api.us-east-1.amazonaws.com', // REQUIRED
 
@@ -99,12 +106,13 @@ var apigClient = apigClientFactory.newClient({
 ```
 
 # Using API Keys
-To use an API Key with the client SDK you can pass the key as a parameter to the Factory object. Note, if you use an apiKey it will be attached as the header 'x-api-key' to all requests to the API will be signed. This means you will have to set the appropriate CORS accept-* headers for each request.
 
-```
+To use an API Key with the client SDK you can pass the key as a parameter to the Factory object. Note, if you use an apiKey it will be attached as the header 'x-api-key' to all requests to the API will be signed. This means you will have to set the appropriate CORS accept-\* headers for each request.
+
+```ts
 var apigClient = apigClientFactory.newClient({
-    invokeUrl:'https://xxxxx.execute-api.us-east-1.amazonaws.com', // REQUIRED
-    apiKey: 'API_KEY', // REQUIRED
-    region: 'eu-west-1' // REQUIRED
+  invokeUrl: "https://xxxxx.execute-api.us-east-1.amazonaws.com", // REQUIRED
+  apiKey: "API_KEY", // REQUIRED
+  region: "eu-west-1", // REQUIRED
 });
 ```
