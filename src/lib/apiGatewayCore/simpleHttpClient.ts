@@ -13,13 +13,13 @@
  * permissions and limitations under the License.
  */
 
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import axiosRetry from "axios-retry";
 import utils from "./utils";
 
-const simpleHttpClientFactory = {};
-simpleHttpClientFactory.newClient = (config) => {
-  function buildCanonicalQueryString(queryParams) {
+const simpleHttpClientFactory: any = {};
+simpleHttpClientFactory.newClient = (config: any) => {
+  function buildCanonicalQueryString(queryParams: any) {
     // Build a properly encoded query string from a QueryParam object
     if (Object.keys(queryParams).length < 1) {
       return "";
@@ -39,10 +39,10 @@ simpleHttpClientFactory.newClient = (config) => {
     return canonicalQueryString.substr(0, canonicalQueryString.length - 1);
   }
 
-  let simpleHttpClient = {};
+  let simpleHttpClient: any = {};
   simpleHttpClient.endpoint = utils.assertDefined(config.endpoint, "endpoint");
 
-  simpleHttpClient.makeRequest = function (request) {
+  simpleHttpClient.makeRequest = function (request: any) {
     let verb = utils.assertDefined(request.verb, "verb");
     let path = utils.assertDefined(request.path, "path");
     let queryParams = utils.copy(request.queryParams);
@@ -73,7 +73,7 @@ simpleHttpClientFactory.newClient = (config) => {
       url += "?" + queryString;
     }
 
-    let simpleHttpRequest = {
+    let simpleHttpRequest: AxiosRequestConfig = {
       headers: headers,
       timeout: timeout,
       data: body,
@@ -85,7 +85,7 @@ simpleHttpClientFactory.newClient = (config) => {
       let client = axios.create(simpleHttpRequest);
 
       // Allow user configurable delay, or built-in exponential delay
-      let retryDelay = () => 0;
+      let retryDelay: any = () => 0;
       if (config.retryDelay === "exponential") {
         retryDelay = axiosRetry.exponentialDelay;
       } else if (typeof config.retryDelay === "number") {

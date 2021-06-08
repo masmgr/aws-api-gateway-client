@@ -10,7 +10,7 @@ const config = {
   secretKey: "0000000000000000000000000000000000000000",
   apiKey: "0000000000000000000000000000000000000000",
   retry: 4,
-  retryCondition: (err) => {
+  retryCondition: (err: any) => {
     return err.response.status === 500;
   },
 };

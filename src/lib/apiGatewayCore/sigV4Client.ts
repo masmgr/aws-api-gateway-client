@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import axiosRetry from "axios-retry";
 import SHA256 from "crypto-js/sha256";
 import encHex from "crypto-js/enc-hex";
@@ -21,8 +21,8 @@ import HmacSHA256 from "crypto-js/hmac-sha256";
 import urlParser from "url";
 import utils from "./utils";
 
-const sigV4ClientFactory = {};
-sigV4ClientFactory.newClient = function (config) {
+const sigV4ClientFactory: any = {};
+sigV4ClientFactory.newClient = function (config: any): any {
   let AWS_SHA_256 = "AWS4-HMAC-SHA256";
   let AWS4_REQUEST = "aws4_request";
   let AWS4 = "AWS4";
@@ -31,19 +31,25 @@ sigV4ClientFactory.newClient = function (config) {
   let HOST = "host";
   let AUTHORIZATION = "Authorization";
 
-  function hash(value) {
+  function hash(value: any) {
     return SHA256(value); // eslint-disable-line
   }
 
-  function hexEncode(value) {
+  function hexEncode(value: any) {
     return value.toString(encHex);
   }
 
-  function hmac(secret, value) {
-    return HmacSHA256(value, secret, { asBytes: true }); // eslint-disable-line
+  function hmac(secret: any, value: any) {
+    return HmacSHA256(value, secret); // eslint-disable-line
   }
 
-  function buildCanonicalRequest(method, path, queryParams, headers, payload) {
+  function buildCanonicalRequest(
+    method: any,
+    path: any,
+    queryParams: any,
+    headers: any,
+    payload: any
+  ) {
     return (
       method +
       "\n" +
@@ -59,15 +65,15 @@ sigV4ClientFactory.newClient = function (config) {
     );
   }
 
-  function hashCanonicalRequest(request) {
+  function hashCanonicalRequest(request: any) {
     return hexEncode(hash(request));
   }
 
-  function buildCanonicalUri(uri) {
+  function buildCanonicalUri(uri: any) {
     return encodeURI(uri);
   }
 
-  function buildCanonicalQueryString(queryParams) {
+  function buildCanonicalQueryString(queryParams: any) {
     if (Object.keys(queryParams).length < 1) {
       return "";
     }
@@ -91,13 +97,13 @@ sigV4ClientFactory.newClient = function (config) {
     return canonicalQueryString.substr(0, canonicalQueryString.length - 1);
   }
 
-  function fixedEncodeURIComponent(str) {
+  function fixedEncodeURIComponent(str: any) {
     return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
       return "%" + c.charCodeAt(0).toString(16);
     });
   }
 
-  function buildCanonicalHeaders(headers) {
+  function buildCanonicalHeaders(headers: any) {
     let canonicalHeaders = "";
     let sortedKeys = [];
     for (let property in headers) {
@@ -114,7 +120,7 @@ sigV4ClientFactory.newClient = function (config) {
     return canonicalHeaders;
   }
 
-  function buildCanonicalSignedHeaders(headers) {
+  function buildCanonicalSignedHeaders(headers: any) {
     let sortedKeys = [];
     for (let property in headers) {
       if (Object.prototype.hasOwnProperty.call(headers, property)) {
@@ -127,9 +133,9 @@ sigV4ClientFactory.newClient = function (config) {
   }
 
   function buildStringToSign(
-    datetime,
-    credentialScope,
-    hashedCanonicalRequest
+    datetime: any,
+    credentialScope: any,
+    hashedCanonicalRequest: any
   ) {
     return (
       AWS_SHA_256 +
@@ -142,13 +148,18 @@ sigV4ClientFactory.newClient = function (config) {
     );
   }
 
-  function buildCredentialScope(datetime, region, service) {
+  function buildCredentialScope(datetime: any, region: any, service: any) {
     return (
       datetime.substr(0, 8) + "/" + region + "/" + service + "/" + AWS4_REQUEST
     );
   }
 
-  function calculateSigningKey(secretKey, datetime, region, service) {
+  function calculateSigningKey(
+    secretKey: any,
+    datetime: any,
+    region: any,
+    service: any
+  ) {
     return hmac(
       hmac(
         hmac(hmac(AWS4 + secretKey, datetime.substr(0, 8)), region),
@@ -158,15 +169,15 @@ sigV4ClientFactory.newClient = function (config) {
     );
   }
 
-  function calculateSignature(key, stringToSign) {
+  function calculateSignature(key: any, stringToSign: any) {
     return hexEncode(hmac(key, stringToSign));
   }
 
   function buildAuthorizationHeader(
-    accessKey,
-    credentialScope,
-    headers,
-    signature
+    accessKey: any,
+    credentialScope: any,
+    headers: any,
+    signature: any
   ) {
     return (
       AWS_SHA_256 +
@@ -181,7 +192,7 @@ sigV4ClientFactory.newClient = function (config) {
     );
   }
 
-  let awsSigV4Client = {};
+  let awsSigV4Client: any = {};
   if (config.accessKey === undefined || config.secretKey === undefined) {
     return awsSigV4Client;
   }
@@ -199,7 +210,7 @@ sigV4ClientFactory.newClient = function (config) {
   awsSigV4Client.retryDelay = config.retryDelay;
   awsSigV4Client.host = config.host;
 
-  awsSigV4Client.makeRequest = function (request) {
+  awsSigV4Client.makeRequest = function (request: any): any {
     let verb = utils.assertDefined(request.verb, "verb");
     let path = utils.assertDefined(request.path, "path");
     let queryParams = utils.copy(request.queryParams);
@@ -306,7 +317,7 @@ sigV4ClientFactory.newClient = function (config) {
       headers["Content-Type"] = config.defaultContentType;
     }
 
-    let signedRequest = {
+    let signedRequest: AxiosRequestConfig = {
       headers: headers,
       timeout: timeout,
       data: body,
@@ -318,7 +329,7 @@ sigV4ClientFactory.newClient = function (config) {
       let client = axios.create(signedRequest);
 
       // Allow user configurable delay, or built-in exponential delay
-      let retryDelay = () => 0;
+      let retryDelay: any = () => 0;
       if (config.retryDelay === "exponential") {
         retryDelay = axiosRetry.exponentialDelay;
       } else if (typeof config.retryDelay === "number") {

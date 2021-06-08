@@ -16,9 +16,9 @@
 import uritemplate from "url-template";
 import apiGatewayClientFactory from "./lib/apiGatewayCore/apiGatewayClient";
 
-const apigClientFactory = {};
+const apigClientFactory: any = {};
 
-const removeEmpty = (obj) => {
+const removeEmpty = (obj: any) => {
   Object.keys(obj).forEach(
     (key) =>
       (obj[key] && typeof obj[key] === "object" && removeEmpty(obj[key])) ||
@@ -27,8 +27,8 @@ const removeEmpty = (obj) => {
   return obj;
 };
 
-apigClientFactory.newClient = (config = {}) => {
-  const apigClient = {};
+apigClientFactory.newClient = (config: any = {}) => {
+  const apigClient: any = {};
 
   config = Object.assign(
     {
@@ -54,7 +54,7 @@ apigClientFactory.newClient = (config = {}) => {
     throw new Error("invokeUrl must be specified!");
   }
 
-  const endpoint = /(^https?:\/\/[^/]+)/g.exec(invokeUrl)[1];
+  const endpoint = /(^https?:\/\/[^/]+)/g.exec(invokeUrl)![1];
   const pathComponent = invokeUrl.substring(endpoint.length);
 
   const sigV4ClientConfig = {
@@ -99,11 +99,11 @@ apigClientFactory.newClient = (config = {}) => {
   );
 
   apigClient.invokeApi = (
-    params,
-    pathTemplate,
-    method,
-    additionalParams,
-    body
+    params: any,
+    pathTemplate: any,
+    method: any,
+    additionalParams: any,
+    body: any
   ) => {
     if (additionalParams === undefined) additionalParams = {};
     if (body === undefined) body = "";

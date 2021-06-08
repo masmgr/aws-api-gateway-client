@@ -38,7 +38,7 @@ const utils = {
     if (params === undefined) {
       return {};
     }
-    let object = {};
+    let object: any = {};
     for (let key of keys) {
       object[key] = params[key];
     }

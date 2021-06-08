@@ -17,12 +17,12 @@ import utils from "./utils";
 import sigV4ClientFactory from "./sigV4Client.js";
 import simpleHttpClientFactory from "./simpleHttpClient.js";
 
-const apiGatewayClientFactory = {};
+const apiGatewayClientFactory: any = {};
 apiGatewayClientFactory.newClient = function (
-  simpleHttpClientConfig,
-  sigV4ClientConfig
-) {
-  let apiGatewayClient = {};
+  simpleHttpClientConfig: any,
+  sigV4ClientConfig: any
+): any {
+  let apiGatewayClient: any = {};
   // Spin up 2 httpClients, one for simple requests, one for SigV4
   let sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
   let simpleHttpClient = simpleHttpClientFactory.newClient(
@@ -30,10 +30,10 @@ apiGatewayClientFactory.newClient = function (
   );
 
   apiGatewayClient.makeRequest = function (
-    request,
-    authType,
-    additionalParams,
-    apiKey
+    request: any,
+    authType: any,
+    additionalParams: any,
+    apiKey: any
   ) {
     // Default the request to use the simple http client
     let clientToUse = simpleHttpClient;
