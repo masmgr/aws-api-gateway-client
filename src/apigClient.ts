@@ -16,8 +16,6 @@
 import uritemplate from "url-template";
 import apiGatewayClientFactory from "./lib/apiGatewayCore/apiGatewayClient";
 
-const apigClientFactory: any = {};
-
 const removeEmpty = (obj: any) => {
   Object.keys(obj).forEach(
     (key) =>
@@ -27,105 +25,107 @@ const removeEmpty = (obj: any) => {
   return obj;
 };
 
-apigClientFactory.newClient = (config: any = {}) => {
-  const apigClient: any = {};
+class apigClientFactory {
+  static newClient(config: any = {}) {
+    const apigClient: any = {};
 
-  config = Object.assign(
-    {
-      accessKey: "",
-      secretKey: "",
-      sessionToken: "",
-      region: "",
-      apiKey: "",
-      invokeUrl: "",
-      service: "execute-api",
-      defaultContentType: "application/json",
-      defaultAcceptType: "application/json",
-      systemClockOffset: 0,
-      headers: {},
-      host: undefined,
-    },
-    removeEmpty(config)
-  );
+    config = Object.assign(
+      {
+        accessKey: "",
+        secretKey: "",
+        sessionToken: "",
+        region: "",
+        apiKey: "",
+        invokeUrl: "",
+        service: "execute-api",
+        defaultContentType: "application/json",
+        defaultAcceptType: "application/json",
+        systemClockOffset: 0,
+        headers: {},
+        host: undefined,
+      },
+      removeEmpty(config)
+    );
 
-  // extract endpoint and path from url
-  const invokeUrl = config.invokeUrl;
-  if (!invokeUrl) {
-    throw new Error("invokeUrl must be specified!");
-  }
+    // extract endpoint and path from url
+    const invokeUrl = config.invokeUrl;
+    if (!invokeUrl) {
+      throw new Error("invokeUrl must be specified!");
+    }
 
-  const endpoint = /(^https?:\/\/[^/]+)/g.exec(invokeUrl)![1];
-  const pathComponent = invokeUrl.substring(endpoint.length);
+    const endpoint = /(^https?:\/\/[^/]+)/g.exec(invokeUrl)![1];
+    const pathComponent = invokeUrl.substring(endpoint.length);
 
-  const sigV4ClientConfig = {
-    accessKey: config.accessKey,
-    secretKey: config.secretKey,
-    sessionToken: config.sessionToken,
-    serviceName: config.service,
-    region: config.region,
-    endpoint: endpoint,
-    defaultContentType: config.defaultContentType,
-    defaultAcceptType: config.defaultAcceptType,
-    systemClockOffset: config.systemClockOffset,
-    retries: config.retries,
-    retryCondition: config.retryCondition,
-    retryDelay: config.retryDelay,
-    host: config.host,
-  };
-
-  let authType = "NONE";
-  if (
-    sigV4ClientConfig.accessKey !== undefined &&
-    sigV4ClientConfig.accessKey !== "" &&
-    sigV4ClientConfig.secretKey !== undefined &&
-    sigV4ClientConfig.secretKey !== ""
-  ) {
-    authType = "AWS_IAM";
-  }
-
-  const simpleHttpClientConfig = {
-    endpoint: endpoint,
-    defaultContentType: config.defaultContentType,
-    defaultAcceptType: config.defaultAcceptType,
-    retries: config.retries,
-    retryCondition: config.retryCondition,
-    retryDelay: config.retryDelay,
-    headers: config.headers,
-  };
-
-  const apiGatewayClient = apiGatewayClientFactory.newClient(
-    simpleHttpClientConfig,
-    sigV4ClientConfig
-  );
-
-  apigClient.invokeApi = (
-    params: any,
-    pathTemplate: any,
-    method: any,
-    additionalParams: any,
-    body: any
-  ) => {
-    if (additionalParams === undefined) additionalParams = {};
-    if (body === undefined) body = "";
-
-    const request = {
-      verb: method.toUpperCase(),
-      path: pathComponent + uritemplate.parse(pathTemplate).expand(params),
-      headers: additionalParams.headers || {},
-      timeout: additionalParams.timeout || 0,
-      queryParams: additionalParams.queryParams,
-      body: body,
+    const sigV4ClientConfig = {
+      accessKey: config.accessKey,
+      secretKey: config.secretKey,
+      sessionToken: config.sessionToken,
+      serviceName: config.service,
+      region: config.region,
+      endpoint: endpoint,
+      defaultContentType: config.defaultContentType,
+      defaultAcceptType: config.defaultAcceptType,
+      systemClockOffset: config.systemClockOffset,
+      retries: config.retries,
+      retryCondition: config.retryCondition,
+      retryDelay: config.retryDelay,
+      host: config.host,
     };
 
-    return apiGatewayClient.makeRequest(
-      request,
-      authType,
-      additionalParams,
-      config.apiKey
-    );
-  };
+    let authType = "NONE";
+    if (
+      sigV4ClientConfig.accessKey !== undefined &&
+      sigV4ClientConfig.accessKey !== "" &&
+      sigV4ClientConfig.secretKey !== undefined &&
+      sigV4ClientConfig.secretKey !== ""
+    ) {
+      authType = "AWS_IAM";
+    }
 
-  return apigClient;
-};
+    const simpleHttpClientConfig = {
+      endpoint: endpoint,
+      defaultContentType: config.defaultContentType,
+      defaultAcceptType: config.defaultAcceptType,
+      retries: config.retries,
+      retryCondition: config.retryCondition,
+      retryDelay: config.retryDelay,
+      headers: config.headers,
+    };
+
+    const apiGatewayClient = apiGatewayClientFactory.newClient(
+      simpleHttpClientConfig,
+      sigV4ClientConfig
+    );
+
+    apigClient.invokeApi = (
+      params: any,
+      pathTemplate: any,
+      method: any,
+      additionalParams: any,
+      body: any
+    ) => {
+      if (additionalParams === undefined) additionalParams = {};
+      if (body === undefined) body = "";
+
+      const request = {
+        verb: method.toUpperCase(),
+        path: pathComponent + uritemplate.parse(pathTemplate).expand(params),
+        headers: additionalParams.headers || {},
+        timeout: additionalParams.timeout || 0,
+        queryParams: additionalParams.queryParams,
+        body: body,
+      };
+
+      return apiGatewayClient.makeRequest(
+        request,
+        authType,
+        additionalParams,
+        config.apiKey
+      );
+    };
+
+    return apigClient;
+  }
+}
 
 export default apigClientFactory;

@@ -13,15 +13,15 @@
  * permissions and limitations under the License.
  */
 
-const utils = {
-  assertDefined: function (object: any, name: any) {
+class utils {
+  static assertDefined(object: any, name: any) {
     if (object === undefined) {
       throw new Error(`${name} must be defined`);
     } else {
       return object;
     }
-  },
-  assertParametersDefined: function (params: any, keys: any, ignore: any) {
+  }
+  static assertParametersDefined(params: any, keys: any, ignore: any) {
     if (keys === undefined) {
       return;
     }
@@ -33,8 +33,8 @@ const utils = {
         utils.assertDefined(params[key], key);
       }
     }
-  },
-  parseParametersToObject: function (params: any, keys: any) {
+  }
+  static parseParametersToObject(params: any, keys: any) {
     if (params === undefined) {
       return {};
     }
@@ -43,8 +43,8 @@ const utils = {
       object[key] = params[key];
     }
     return object;
-  },
-  contains: function (a: any, obj: any) {
+  }
+  static contains(a: any, obj: any) {
     if (a === undefined) {
       return false;
     }
@@ -55,8 +55,8 @@ const utils = {
       }
     }
     return false;
-  },
-  copy: function (obj: any) {
+  }
+  static copy(obj: any) {
     if (null === obj || "object" !== typeof obj) return obj;
     const Buffer = require("buffer").Buffer;
     if (Buffer.isBuffer(obj)) return Buffer.from(obj);
@@ -66,8 +66,8 @@ const utils = {
         copy[attr] = obj[attr];
     }
     return copy;
-  },
-  mergeInto: function (baseObj: any, additionalProps: any) {
+  }
+  static mergeInto(baseObj: any, additionalProps: any) {
     if (null === baseObj || "object" !== typeof baseObj) return baseObj;
     const merged = baseObj.constructor();
     for (const attr in baseObj) {
@@ -82,7 +82,7 @@ const utils = {
       }
     }
     return merged;
-  },
-};
+  }
+}
 
 export default utils;
