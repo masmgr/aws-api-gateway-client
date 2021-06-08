@@ -39,12 +39,12 @@ simpleHttpClientFactory.newClient = (config: any) => {
     return canonicalQueryString.substr(0, canonicalQueryString.length - 1);
   }
 
-  let simpleHttpClient: any = {};
+  const simpleHttpClient: any = {};
   simpleHttpClient.endpoint = utils.assertDefined(config.endpoint, "endpoint");
 
   simpleHttpClient.makeRequest = function (request: any) {
-    let verb = utils.assertDefined(request.verb, "verb");
-    let path = utils.assertDefined(request.path, "path");
+    const verb = utils.assertDefined(request.verb, "verb");
+    const path = utils.assertDefined(request.path, "path");
     let queryParams = utils.copy(request.queryParams);
     let timeout = utils.copy(request.timeout);
     if (queryParams === undefined) {
@@ -53,7 +53,7 @@ simpleHttpClientFactory.newClient = (config: any) => {
     if (timeout === undefined) {
       timeout = 0;
     }
-    let headers = { ...utils.copy(request.headers), ...config.headers };
+    const headers = { ...utils.copy(request.headers), ...config.headers };
 
     // If the user has not specified an override for Content type the use default
     if (headers["Content-Type"] === undefined) {
@@ -65,15 +65,15 @@ simpleHttpClientFactory.newClient = (config: any) => {
       headers["Accept"] = config.defaultAcceptType;
     }
 
-    let body = utils.copy(request.body);
+    const body = utils.copy(request.body);
 
     let url = config.endpoint + path;
-    let queryString = buildCanonicalQueryString(queryParams);
+    const queryString = buildCanonicalQueryString(queryParams);
     if (queryString !== "") {
       url += "?" + queryString;
     }
 
-    let simpleHttpRequest: AxiosRequestConfig = {
+    const simpleHttpRequest: AxiosRequestConfig = {
       headers: headers,
       timeout: timeout,
       data: body,
@@ -82,7 +82,7 @@ simpleHttpClientFactory.newClient = (config: any) => {
     };
     if (config.retries !== undefined) {
       simpleHttpRequest.baseURL = url;
-      let client = axios.create(simpleHttpRequest);
+      const client = axios.create(simpleHttpRequest);
 
       // Allow user configurable delay, or built-in exponential delay
       let retryDelay: any = () => 0;

@@ -22,10 +22,10 @@ apiGatewayClientFactory.newClient = function (
   simpleHttpClientConfig: any,
   sigV4ClientConfig: any
 ): any {
-  let apiGatewayClient: any = {};
+  const apiGatewayClient: any = {};
   // Spin up 2 httpClients, one for simple requests, one for SigV4
-  let sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
-  let simpleHttpClient = simpleHttpClientFactory.newClient(
+  const sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
+  const simpleHttpClient = simpleHttpClientFactory.newClient(
     simpleHttpClientConfig
   );
 

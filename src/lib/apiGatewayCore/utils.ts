@@ -28,7 +28,7 @@ const utils = {
     if (keys.length > 0 && params === undefined) {
       params = {};
     }
-    for (let key of keys) {
+    for (const key of keys) {
       if (!utils.contains(ignore, key)) {
         utils.assertDefined(params[key], key);
       }
@@ -38,8 +38,8 @@ const utils = {
     if (params === undefined) {
       return {};
     }
-    let object: any = {};
-    for (let key of keys) {
+    const object: any = {};
+    for (const key of keys) {
       object[key] = params[key];
     }
     return object;
@@ -58,11 +58,10 @@ const utils = {
   },
   copy: function (obj: any) {
     if (null === obj || "object" !== typeof obj) return obj;
-    let Buffer = require("buffer").Buffer;
+    const Buffer = require("buffer").Buffer;
     if (Buffer.isBuffer(obj)) return Buffer.from(obj);
-    let copy = obj.constructor();
-    let attr = null;
-    for (attr in obj) {
+    const copy = obj.constructor();
+    for (const attr in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, attr))
         copy[attr] = obj[attr];
     }
@@ -70,15 +69,14 @@ const utils = {
   },
   mergeInto: function (baseObj: any, additionalProps: any) {
     if (null === baseObj || "object" !== typeof baseObj) return baseObj;
-    let merged = baseObj.constructor();
-    let attr = null;
-    for (attr in baseObj) {
+    const merged = baseObj.constructor();
+    for (const attr in baseObj) {
       if (Object.prototype.hasOwnProperty.call(baseObj, attr))
         merged[attr] = baseObj[attr];
     }
     if (null == additionalProps || "object" != typeof additionalProps)
       return baseObj;
-    for (attr in additionalProps) {
+    for (const attr in additionalProps) {
       if (Object.prototype.hasOwnProperty.call(additionalProps, attr)) {
         merged[attr] = additionalProps[attr];
       }

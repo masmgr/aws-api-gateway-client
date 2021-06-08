@@ -23,13 +23,13 @@ import utils from "./utils";
 
 const sigV4ClientFactory: any = {};
 sigV4ClientFactory.newClient = function (config: any): any {
-  let AWS_SHA_256 = "AWS4-HMAC-SHA256";
-  let AWS4_REQUEST = "aws4_request";
-  let AWS4 = "AWS4";
-  let X_AMZ_DATE = "x-amz-date";
-  let X_AMZ_SECURITY_TOKEN = "x-amz-security-token";
-  let HOST = "host";
-  let AUTHORIZATION = "Authorization";
+  const AWS_SHA_256 = "AWS4-HMAC-SHA256";
+  const AWS4_REQUEST = "aws4_request";
+  const AWS4 = "AWS4";
+  const X_AMZ_DATE = "x-amz-date";
+  const X_AMZ_SECURITY_TOKEN = "x-amz-security-token";
+  const HOST = "host";
+  const AUTHORIZATION = "Authorization";
 
   function hash(value: any) {
     return SHA256(value); // eslint-disable-line
@@ -78,7 +78,7 @@ sigV4ClientFactory.newClient = function (config: any): any {
       return "";
     }
 
-    let sortedQueryParams = [];
+    const sortedQueryParams = [];
     for (let property in queryParams) {
       if (Object.prototype.hasOwnProperty.call(queryParams, property)) {
         sortedQueryParams.push(property);
@@ -105,7 +105,7 @@ sigV4ClientFactory.newClient = function (config: any): any {
 
   function buildCanonicalHeaders(headers: any) {
     let canonicalHeaders = "";
-    let sortedKeys = [];
+    const sortedKeys = [];
     for (let property in headers) {
       if (Object.prototype.hasOwnProperty.call(headers, property)) {
         sortedKeys.push(property);
@@ -113,15 +113,14 @@ sigV4ClientFactory.newClient = function (config: any): any {
     }
     sortedKeys.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
-    for (let i = 0; i < sortedKeys.length; i++) {
-      canonicalHeaders +=
-        sortedKeys[i].toLowerCase() + ":" + headers[sortedKeys[i]] + "\n";
+    for (let key of sortedKeys) {
+      canonicalHeaders += key.toLowerCase() + ":" + headers[key] + "\n";
     }
     return canonicalHeaders;
   }
 
   function buildCanonicalSignedHeaders(headers: any) {
-    let sortedKeys = [];
+    const sortedKeys = [];
     for (let property in headers) {
       if (Object.prototype.hasOwnProperty.call(headers, property)) {
         sortedKeys.push(property.toLowerCase());
@@ -192,7 +191,7 @@ sigV4ClientFactory.newClient = function (config: any): any {
     );
   }
 
-  let awsSigV4Client: any = {};
+  const awsSigV4Client: any = {};
   if (config.accessKey === undefined || config.secretKey === undefined) {
     return awsSigV4Client;
   }
@@ -211,8 +210,8 @@ sigV4ClientFactory.newClient = function (config: any): any {
   awsSigV4Client.host = config.host;
 
   awsSigV4Client.makeRequest = function (request: any): any {
-    let verb = utils.assertDefined(request.verb, "verb");
-    let path = utils.assertDefined(request.path, "path");
+    const verb = utils.assertDefined(request.verb, "verb");
+    const path = utils.assertDefined(request.path, "path");
     let queryParams = utils.copy(request.queryParams);
     let timeout = utils.copy(request.timeout);
 
@@ -254,7 +253,7 @@ sigV4ClientFactory.newClient = function (config: any): any {
       delete headers["Content-Type"];
     }
 
-    let datetime = new Date(new Date().getTime() + config.systemClockOffset)
+    const datetime = new Date(new Date().getTime() + config.systemClockOffset)
       .toISOString()
       .replace(/\.\d{3}Z$/, "Z")
       .replace(/[:-]|\.\d{3}/g, "");
@@ -263,7 +262,7 @@ sigV4ClientFactory.newClient = function (config: any): any {
     if (awsSigV4Client.host) {
       headers[HOST] = awsSigV4Client.host;
     } else {
-      let parser = urlParser.parse(awsSigV4Client.endpoint);
+      const parser = urlParser.parse(awsSigV4Client.endpoint);
       headers[HOST] = parser.hostname;
     }
 
@@ -274,24 +273,24 @@ sigV4ClientFactory.newClient = function (config: any): any {
       headers,
       body
     );
-    let hashedCanonicalRequest = hashCanonicalRequest(canonicalRequest);
-    let credentialScope = buildCredentialScope(
+    const hashedCanonicalRequest = hashCanonicalRequest(canonicalRequest);
+    const credentialScope = buildCredentialScope(
       datetime,
       awsSigV4Client.region,
       awsSigV4Client.serviceName
     );
-    let stringToSign = buildStringToSign(
+    const stringToSign = buildStringToSign(
       datetime,
       credentialScope,
       hashedCanonicalRequest
     );
-    let signingKey = calculateSigningKey(
+    const signingKey = calculateSigningKey(
       awsSigV4Client.secretKey,
       datetime,
       awsSigV4Client.region,
       awsSigV4Client.serviceName
     );
-    let signature = calculateSignature(signingKey, stringToSign);
+    const signature = calculateSignature(signingKey, stringToSign);
     headers[AUTHORIZATION] = buildAuthorizationHeader(
       awsSigV4Client.accessKey,
       credentialScope,
@@ -307,7 +306,7 @@ sigV4ClientFactory.newClient = function (config: any): any {
     delete headers[HOST];
 
     let url = config.endpoint + path;
-    let queryString = buildCanonicalQueryString(queryParams);
+    const queryString = buildCanonicalQueryString(queryParams);
     if (queryString !== "") {
       url += "?" + queryString;
     }
@@ -317,7 +316,7 @@ sigV4ClientFactory.newClient = function (config: any): any {
       headers["Content-Type"] = config.defaultContentType;
     }
 
-    let signedRequest: AxiosRequestConfig = {
+    const signedRequest: AxiosRequestConfig = {
       headers: headers,
       timeout: timeout,
       data: body,
@@ -326,7 +325,7 @@ sigV4ClientFactory.newClient = function (config: any): any {
     };
     if (config.retries !== undefined) {
       signedRequest.baseURL = url;
-      let client = axios.create(signedRequest);
+      const client = axios.create(signedRequest);
 
       // Allow user configurable delay, or built-in exponential delay
       let retryDelay: any = () => 0;
