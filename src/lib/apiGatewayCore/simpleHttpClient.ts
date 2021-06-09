@@ -23,10 +23,10 @@ import axiosRetry, { IAxiosRetryConfig } from "axios-retry";
 import utils, { QueryParams } from "./utils";
 
 export interface simpleHttpClientFactoryConfig {
-  endpoint: string | undefined;
-  headers: object | undefined;
-  defaultContentType: string | undefined;
-  defaultAcceptType: string | undefined;
+  endpoint: string;
+  headers?: object;
+  defaultContentType: string;
+  defaultAcceptType: string;
   retries: number;
   retryDelay: "exponential" | number | (() => number);
   retryCondition: (error: AxiosError) => boolean;

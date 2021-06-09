@@ -14,19 +14,52 @@
  */
 
 import utils from "./utils";
-import sigV4ClientFactory from "./sigV4Client.js";
-import simpleHttpClientFactory from "./simpleHttpClient.js";
+import sigV4ClientFactory, {
+  awsSigV4Client,
+  awsSigV4ClientFactoryConfig,
+} from "./sigV4Client.js";
+import simpleHttpClientFactory, {
+  simpleHttpClient,
+  simpleHttpClientFactoryConfig,
+} from "./simpleHttpClient.js";
+import { AxiosError, AxiosPromise } from "axios";
+
+export interface apiGatewayClientFactoryConfig
+  extends awsSigV4ClientFactoryConfig {
+  systemClockOffset: string;
+  accessKey: string;
+  secretKey: string;
+  sessionToken: string;
+  serviceName: string;
+  region: string;
+  host: string;
+}
+
+export interface apiGatewayClientRequest {
+  request: any;
+  authType: any;
+  additionalParams: any;
+  apiKey: any;
+}
+
+export interface apiGatewayClient {
+  sigV4Client: awsSigV4Client;
+  simpleHttpClient: simpleHttpClient;
+  makeRequest: (request: apiGatewayClientRequest) => AxiosPromise<any>;
+}
 
 class apiGatewayClientFactory {
-  static newClient(simpleHttpClientConfig: any, sigV4ClientConfig: any): any {
-    class apiGatewayClient {
+  static newClient(
+    simpleHttpClientConfig: simpleHttpClientFactoryConfig,
+    sigV4ClientConfig: awsSigV4ClientFactoryConfig
+  ): any {
+    return {
       // Spin up 2 httpClients, one for simple requests, one for SigV4
-      sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
-      simpleHttpClient = simpleHttpClientFactory.newClient(
+      sigV4Client: sigV4ClientFactory.newClient(sigV4ClientConfig),
+      simpleHttpClient: simpleHttpClientFactory.newClient(
         simpleHttpClientConfig
-      );
-
-      makeRequest(
+      ),
+      makeRequest: function (
         request: any,
         authType: any,
         additionalParams: any,
@@ -72,9 +105,8 @@ class apiGatewayClientFactory {
         // Call the selected http client to make the request,
         // returning a promise once the request is sent
         return clientToUse.makeRequest(request);
-      }
-    }
-    return new apiGatewayClient();
+      },
+    } as apiGatewayClient;
   }
 }
 

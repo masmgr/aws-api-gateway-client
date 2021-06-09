@@ -13,8 +13,11 @@
  * permissions and limitations under the License.
  */
 
+import { AxiosError } from "axios";
 import uritemplate from "url-template";
 import apiGatewayClientFactory from "./lib/apiGatewayCore/apiGatewayClient";
+import { awsSigV4ClientFactoryConfig } from "./lib/apiGatewayCore/sigV4Client";
+import { simpleHttpClientFactoryConfig } from "./lib/apiGatewayCore/simpleHttpClient";
 
 const removeEmpty = (obj: any) => {
   Object.keys(obj).forEach(
@@ -25,8 +28,28 @@ const removeEmpty = (obj: any) => {
   return obj;
 };
 
+export type apigClientFactoryConfig = {
+  endpoint: string;
+  defaultContentType: string;
+  defaultAcceptType: string;
+  retries: number;
+  retryDelay: "exponential" | number | (() => number);
+  retryCondition: (error: AxiosError) => boolean;
+  systemClockOffset: string;
+  accessKey: string;
+  secretKey: string;
+  sessionToken: string;
+  serviceName: string;
+  region: string;
+  host: string;
+  invokeUrl: string;
+  service: string;
+  apiKey: string;
+  headers?: object;
+};
+
 class apigClientFactory {
-  static newClient(config: any = {}) {
+  static newClient(config: apigClientFactoryConfig) {
     const apigClient: any = {};
 
     config = Object.assign(
@@ -56,7 +79,7 @@ class apigClientFactory {
     const endpoint = /(^https?:\/\/[^/]+)/g.exec(invokeUrl)![1];
     const pathComponent = invokeUrl.substring(endpoint.length);
 
-    const sigV4ClientConfig = {
+    const sigV4ClientConfig: awsSigV4ClientFactoryConfig = {
       accessKey: config.accessKey,
       secretKey: config.secretKey,
       sessionToken: config.sessionToken,
@@ -82,7 +105,7 @@ class apigClientFactory {
       authType = "AWS_IAM";
     }
 
-    const simpleHttpClientConfig = {
+    const simpleHttpClientConfig: simpleHttpClientFactoryConfig = {
       endpoint: endpoint,
       defaultContentType: config.defaultContentType,
       defaultAcceptType: config.defaultAcceptType,
