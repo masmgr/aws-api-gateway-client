@@ -17,12 +17,12 @@ import utils from "./utils";
 import sigV4ClientFactory, {
   awsSigV4Client,
   awsSigV4ClientFactoryConfig,
-} from "./sigV4Client.js";
+} from "./sigV4Client";
 import simpleHttpClientFactory, {
   simpleHttpClient,
   simpleHttpClientFactoryConfig,
-} from "./simpleHttpClient.js";
-import { AxiosError, AxiosPromise } from "axios";
+} from "./simpleHttpClient";
+import { AxiosPromise } from "axios";
 
 export interface apiGatewayClientFactoryConfig
   extends awsSigV4ClientFactoryConfig {
@@ -45,14 +45,19 @@ export interface apiGatewayClientRequest {
 export interface apiGatewayClient {
   sigV4Client: awsSigV4Client;
   simpleHttpClient: simpleHttpClient;
-  makeRequest: (request: apiGatewayClientRequest) => AxiosPromise<any>;
+  makeRequest: (
+    request: apiGatewayClientRequest,
+    authType: any,
+    additionalParams: any,
+    apiKey: any
+  ) => AxiosPromise<any>;
 }
 
 class apiGatewayClientFactory {
   static newClient(
     simpleHttpClientConfig: simpleHttpClientFactoryConfig,
     sigV4ClientConfig: awsSigV4ClientFactoryConfig
-  ): any {
+  ) {
     return {
       // Spin up 2 httpClients, one for simple requests, one for SigV4
       sigV4Client: sigV4ClientFactory.newClient(sigV4ClientConfig),

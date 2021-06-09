@@ -19,7 +19,7 @@ import axios, {
   AxiosRequestConfig,
   Method,
 } from "axios";
-import axiosRetry, { IAxiosRetryConfig } from "axios-retry";
+import axiosRetry from "axios-retry";
 import utils, { QueryParams } from "./utils";
 
 export interface simpleHttpClientFactoryConfig {

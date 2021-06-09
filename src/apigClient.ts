@@ -113,7 +113,7 @@ class apigClientFactory {
       retryCondition: config.retryCondition,
       retryDelay: config.retryDelay,
       headers: config.headers,
-    };
+    } as simpleHttpClientFactoryConfig;
 
     const apiGatewayClient = apiGatewayClientFactory.newClient(
       simpleHttpClientConfig,

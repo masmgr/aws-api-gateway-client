@@ -237,6 +237,10 @@ class sigV4ClientFactory {
         signature
       );
     }
+ 
+    if (config.accessKey === undefined || config.secretKey === undefined) {
+      return {} as awsSigV4Client;
+    }
 
     return {
       accessKey: utils.assertDefined(config.accessKey, "accessKey"),
