@@ -1,22 +1,24 @@
 /* eslint arrow-parens: off */
 import test from "ava";
-import apigClientFactory from "../src/apigClient.js";
+import apigClientFactory, {
+  apigClientFactoryConfig,
+} from "../src/apigClient.js";
 
 // TEST CONFIG -- TODO fill in with "real" testable values
-const config = {
+const config: apigClientFactoryConfig = {
   invokeUrl: "https://0000000000.execute-api.us-east-1.amazonaws.com",
   region: "us-east-1",
   accessKey: "00000000000000000000",
   secretKey: "0000000000000000000000000000000000000000",
   apiKey: "0000000000000000000000000000000000000000",
-  retry: 4,
+  retries: 4,
   retryCondition: (err: any) => {
     return err.response.status === 500;
   },
-};
+} as apigClientFactoryConfig;
 
 test("apigClientFactory exists", (t) => {
-  t.deepEqual(typeof apigClientFactory, "object");
+  t.deepEqual(typeof apigClientFactory, "function");
   t.deepEqual(typeof apigClientFactory.newClient, "function");
 });
 
