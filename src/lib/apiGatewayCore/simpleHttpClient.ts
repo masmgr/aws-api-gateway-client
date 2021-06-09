@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, Method } from "axios";
 import axiosRetry from "axios-retry";
 import utils from "./utils";
 
@@ -26,7 +26,7 @@ class simpleHttpClientFactory {
       }
 
       let canonicalQueryString = "";
-      for (let property in queryParams) {
+      for (const property in queryParams) {
         if (Object.prototype.hasOwnProperty.call(queryParams, property)) {
           canonicalQueryString +=
             encodeURIComponent(property) +
@@ -39,78 +39,75 @@ class simpleHttpClientFactory {
       return canonicalQueryString.substr(0, canonicalQueryString.length - 1);
     }
 
-    const simpleHttpClient: any = {};
-    simpleHttpClient.endpoint = utils.assertDefined(
-      config.endpoint,
-      "endpoint"
-    );
+    class simpleHttpClient {
+      endpoint = utils.assertDefined(config.endpoint, "endpoint");
 
-    simpleHttpClient.makeRequest = function (request: any) {
-      const verb = utils.assertDefined(request.verb, "verb");
-      const path = utils.assertDefined(request.path, "path");
-      let queryParams = utils.copy(request.queryParams);
-      let timeout = utils.copy(request.timeout);
-      if (queryParams === undefined) {
-        queryParams = {};
-      }
-      if (timeout === undefined) {
-        timeout = 0;
-      }
-      const headers = { ...utils.copy(request.headers), ...config.headers };
+      public makeRequest(request: any) {
+        const verb: Method = utils.assertDefined(request.verb, "verb");
+        const path: string = utils.assertDefined(request.path, "path");
+        let queryParams = utils.copy(request.queryParams);
+        let timeout: number | undefined = utils.copy(request.timeout);
+        if (queryParams === undefined) {
+          queryParams = {};
+        }
+        if (timeout === undefined) {
+          timeout = 0;
+        }
+        const headers = { ...utils.copy(request.headers), ...config.headers };
 
-      // If the user has not specified an override for Content type the use default
-      if (headers["Content-Type"] === undefined) {
-        headers["Content-Type"] = config.defaultContentType;
-      }
-
-      // If the user has not specified an override for Accept type the use default
-      if (headers["Accept"] === undefined) {
-        headers["Accept"] = config.defaultAcceptType;
-      }
-
-      const body = utils.copy(request.body);
-
-      let url = config.endpoint + path;
-      const queryString = buildCanonicalQueryString(queryParams);
-      if (queryString !== "") {
-        url += "?" + queryString;
-      }
-
-      const simpleHttpRequest: AxiosRequestConfig = {
-        headers: headers,
-        timeout: timeout,
-        data: body,
-        method: verb,
-        url: url,
-      };
-      if (config.retries !== undefined) {
-        simpleHttpRequest.baseURL = url;
-        const client = axios.create(simpleHttpRequest);
-
-        // Allow user configurable delay, or built-in exponential delay
-        let retryDelay: any = () => 0;
-        if (config.retryDelay === "exponential") {
-          retryDelay = axiosRetry.exponentialDelay;
-        } else if (typeof config.retryDelay === "number") {
-          retryDelay = () => parseInt(config.retryDelay);
-        } else if (typeof config.retryDelay === "function") {
-          retryDelay = config.retryDelay;
+        // If the user has not specified an override for Content type the use default
+        if (headers["Content-Type"] === undefined) {
+          headers["Content-Type"] = config.defaultContentType;
         }
 
-        axiosRetry(client, {
-          ...config,
-          retryCondition:
-            typeof config.retryCondition === "function"
-              ? config.retryCondition
-              : axiosRetry.isNetworkOrIdempotentRequestError,
-          retryDelay,
-        });
-        return client.request(simpleHttpRequest);
-      }
-      return axios(simpleHttpRequest);
-    };
+        // If the user has not specified an override for Accept type the use default
+        if (headers["Accept"] === undefined) {
+          headers["Accept"] = config.defaultAcceptType;
+        }
 
-    return simpleHttpClient;
+        const body = utils.copy(request.body);
+
+        let url = config.endpoint + path;
+        const queryString = buildCanonicalQueryString(queryParams);
+        if (queryString !== "") {
+          url += "?" + queryString;
+        }
+
+        const simpleHttpRequest: AxiosRequestConfig = {
+          headers: headers,
+          timeout: timeout,
+          data: body,
+          method: verb,
+          url,
+        };
+        if (config.retries !== undefined) {
+          simpleHttpRequest.baseURL = url;
+          const client = axios.create(simpleHttpRequest);
+
+          // Allow user configurable delay, or built-in exponential delay
+          let retryDelay: any = () => 0;
+          if (config.retryDelay === "exponential") {
+            retryDelay = axiosRetry.exponentialDelay;
+          } else if (typeof config.retryDelay === "number") {
+            retryDelay = () => parseInt(config.retryDelay);
+          } else if (typeof config.retryDelay === "function") {
+            retryDelay = config.retryDelay;
+          }
+
+          axiosRetry(client, {
+            ...config,
+            retryCondition:
+              typeof config.retryCondition === "function"
+                ? config.retryCondition
+                : axiosRetry.isNetworkOrIdempotentRequestError,
+            retryDelay,
+          });
+          return client.request(simpleHttpRequest);
+        }
+        return axios(simpleHttpRequest);
+      }
+    }
+    return new simpleHttpClient();
   }
 }
 

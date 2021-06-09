@@ -22,7 +22,7 @@ import urlParser from "url";
 import utils from "./utils";
 
 class sigV4ClientFactory {
-  static newClient(config: any): any {
+  static newClient(config: any) {
     const AWS_SHA_256 = "AWS4-HMAC-SHA256";
     const AWS4_REQUEST = "aws4_request";
     const AWS4 = "AWS4";
@@ -97,7 +97,7 @@ class sigV4ClientFactory {
       return canonicalQueryString.substr(0, canonicalQueryString.length - 1);
     }
 
-    function fixedEncodeURIComponent(str: any) {
+    function fixedEncodeURIComponent(str: string): string {
       return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
         return "%" + c.charCodeAt(0).toString(16);
       });
@@ -197,170 +197,160 @@ class sigV4ClientFactory {
       );
     }
 
-    const awsSigV4Client: any = {};
-    if (config.accessKey === undefined || config.secretKey === undefined) {
-      return awsSigV4Client;
-    }
-    awsSigV4Client.accessKey = utils.assertDefined(
-      config.accessKey,
-      "accessKey"
-    );
-    awsSigV4Client.secretKey = utils.assertDefined(
-      config.secretKey,
-      "secretKey"
-    );
-    awsSigV4Client.sessionToken = config.sessionToken;
-    awsSigV4Client.serviceName = utils.assertDefined(
-      config.serviceName,
-      "serviceName"
-    );
-    awsSigV4Client.region = utils.assertDefined(config.region, "region");
-    awsSigV4Client.endpoint = utils.assertDefined(config.endpoint, "endpoint");
-    awsSigV4Client.retries = config.retries;
-    awsSigV4Client.retryCondition = config.retryCondition;
-    awsSigV4Client.retryDelay = config.retryDelay;
-    awsSigV4Client.host = config.host;
+    class awsSigV4Client {
+      accessKey = utils.assertDefined(config.accessKey, "accessKey");
+      secretKey = utils.assertDefined(config.secretKey, "secretKey");
+      sessionToken = config.sessionToken;
+      serviceName = utils.assertDefined(config.serviceName, "serviceName");
+      region = utils.assertDefined(config.region, "region");
+      endpoint = utils.assertDefined(config.endpoint, "endpoint");
+      retries = config.retries;
+      retryCondition = config.retryCondition;
+      retryDelay = config.retryDelay;
+      host = config.host;
 
-    awsSigV4Client.makeRequest = function (request: any): any {
-      const verb = utils.assertDefined(request.verb, "verb");
-      const path = utils.assertDefined(request.path, "path");
-      let queryParams = utils.copy(request.queryParams);
-      let timeout = utils.copy(request.timeout);
+      public makeRequest(request: any): any {
+        const verb = utils.assertDefined(request.verb, "verb");
+        const path = utils.assertDefined(request.path, "path");
+        let queryParams = utils.copy(request.queryParams);
+        let timeout = utils.copy(request.timeout);
 
-      if (queryParams === undefined) {
-        queryParams = {};
-      }
-
-      if (timeout === undefined) {
-        timeout = 0;
-      }
-      let headers = utils.copy(request.headers);
-      if (headers === undefined) {
-        headers = {};
-      }
-
-      // If the user has not specified an override for Content type the use default
-      if (headers["Content-Type"] === undefined) {
-        headers["Content-Type"] = config.defaultContentType;
-      }
-
-      // If the user has not specified an override for Accept type the use default
-      if (headers["Accept"] === undefined) {
-        headers["Accept"] = config.defaultAcceptType;
-      }
-
-      let body = utils.copy(request.body);
-
-      // stringify request body if content type is JSON
-      if (
-        body &&
-        headers["Content-Type"] &&
-        headers["Content-Type"] === "application/json"
-      ) {
-        body = JSON.stringify(body);
-      }
-
-      // If there is no body remove the content-type header so it is not included in SigV4 calculation
-      if (body === "" || body === undefined || body === null) {
-        delete headers["Content-Type"];
-      }
-
-      const datetime = new Date(new Date().getTime() + config.systemClockOffset)
-        .toISOString()
-        .replace(/\.\d{3}Z$/, "Z")
-        .replace(/[:-]|\.\d{3}/g, "");
-      headers[X_AMZ_DATE] = datetime;
-
-      if (awsSigV4Client.host) {
-        headers[HOST] = awsSigV4Client.host;
-      } else {
-        const parser = urlParser.parse(awsSigV4Client.endpoint);
-        headers[HOST] = parser.hostname;
-      }
-
-      let canonicalRequest = buildCanonicalRequest(
-        verb,
-        path,
-        queryParams,
-        headers,
-        body
-      );
-      const hashedCanonicalRequest = hashCanonicalRequest(canonicalRequest);
-      const credentialScope = buildCredentialScope(
-        datetime,
-        awsSigV4Client.region,
-        awsSigV4Client.serviceName
-      );
-      const stringToSign = buildStringToSign(
-        datetime,
-        credentialScope,
-        hashedCanonicalRequest
-      );
-      const signingKey = calculateSigningKey(
-        awsSigV4Client.secretKey,
-        datetime,
-        awsSigV4Client.region,
-        awsSigV4Client.serviceName
-      );
-      const signature = calculateSignature(signingKey, stringToSign);
-      headers[AUTHORIZATION] = buildAuthorizationHeader(
-        awsSigV4Client.accessKey,
-        credentialScope,
-        headers,
-        signature
-      );
-      if (
-        awsSigV4Client.sessionToken !== undefined &&
-        awsSigV4Client.sessionToken !== ""
-      ) {
-        headers[X_AMZ_SECURITY_TOKEN] = awsSigV4Client.sessionToken;
-      }
-      delete headers[HOST];
-
-      let url = config.endpoint + path;
-      const queryString = buildCanonicalQueryString(queryParams);
-      if (queryString !== "") {
-        url += "?" + queryString;
-      }
-
-      // Need to re-attach Content-Type if it is not specified at this point
-      if (headers["Content-Type"] === undefined) {
-        headers["Content-Type"] = config.defaultContentType;
-      }
-
-      const signedRequest: AxiosRequestConfig = {
-        headers: headers,
-        timeout: timeout,
-        data: body,
-        method: verb,
-        url,
-      };
-      if (config.retries !== undefined) {
-        signedRequest.baseURL = url;
-        const client = axios.create(signedRequest);
-
-        // Allow user configurable delay, or built-in exponential delay
-        let retryDelay: any = () => 0;
-        if (config.retryDelay === "exponential") {
-          retryDelay = axiosRetry.exponentialDelay;
-        } else if (typeof config.retryDelay === "number") {
-          retryDelay = () => parseInt(config.retryDelay);
-        } else if (typeof config.retryDelay === "function") {
-          retryDelay = config.retryDelay;
+        if (queryParams === undefined) {
+          queryParams = {};
         }
 
-        axiosRetry(client, {
-          ...config,
-          retryCondition: config.retryCondition,
-          retryDelay,
-        });
-        return client.request(signedRequest);
+        if (timeout === undefined) {
+          timeout = 0;
+        }
+        let headers = utils.copy(request.headers);
+        if (headers === undefined) {
+          headers = {};
+        }
+
+        // If the user has not specified an override for Content type the use default
+        if (headers["Content-Type"] === undefined) {
+          headers["Content-Type"] = config.defaultContentType;
+        }
+
+        // If the user has not specified an override for Accept type the use default
+        if (headers["Accept"] === undefined) {
+          headers["Accept"] = config.defaultAcceptType;
+        }
+
+        let body = utils.copy(request.body);
+
+        // stringify request body if content type is JSON
+        if (
+          body &&
+          headers["Content-Type"] &&
+          headers["Content-Type"] === "application/json"
+        ) {
+          body = JSON.stringify(body);
+        }
+
+        // If there is no body remove the content-type header so it is not included in SigV4 calculation
+        if (body === "" || body === undefined || body === null) {
+          delete headers["Content-Type"];
+        }
+
+        const datetime = new Date(
+          new Date().getTime() + config.systemClockOffset
+        )
+          .toISOString()
+          .replace(/\.\d{3}Z$/, "Z")
+          .replace(/[:-]|\.\d{3}/g, "");
+        headers[X_AMZ_DATE] = datetime;
+
+        if (this.host) {
+          headers[HOST] = this.host;
+        } else {
+          const parser = urlParser.parse(this.endpoint);
+          headers[HOST] = parser.hostname;
+        }
+
+        let canonicalRequest = buildCanonicalRequest(
+          verb,
+          path,
+          queryParams,
+          headers,
+          body
+        );
+        const hashedCanonicalRequest = hashCanonicalRequest(canonicalRequest);
+        const credentialScope = buildCredentialScope(
+          datetime,
+          this.region,
+          this.serviceName
+        );
+        const stringToSign = buildStringToSign(
+          datetime,
+          credentialScope,
+          hashedCanonicalRequest
+        );
+        const signingKey = calculateSigningKey(
+          this.secretKey,
+          datetime,
+          this.region,
+          this.serviceName
+        );
+        const signature = calculateSignature(signingKey, stringToSign);
+        headers[AUTHORIZATION] = buildAuthorizationHeader(
+          this.accessKey,
+          credentialScope,
+          headers,
+          signature
+        );
+        if (this.sessionToken !== undefined && this.sessionToken !== "") {
+          headers[X_AMZ_SECURITY_TOKEN] = this.sessionToken;
+        }
+        delete headers[HOST];
+
+        let url = config.endpoint + path;
+        const queryString = buildCanonicalQueryString(queryParams);
+        if (queryString !== "") {
+          url += "?" + queryString;
+        }
+
+        // Need to re-attach Content-Type if it is not specified at this point
+        if (headers["Content-Type"] === undefined) {
+          headers["Content-Type"] = config.defaultContentType;
+        }
+
+        const signedRequest: AxiosRequestConfig = {
+          headers: headers,
+          timeout: timeout,
+          data: body,
+          method: verb,
+          url,
+        };
+        if (config.retries !== undefined) {
+          signedRequest.baseURL = url;
+          const client = axios.create(signedRequest);
+
+          // Allow user configurable delay, or built-in exponential delay
+          let retryDelay: any = () => 0;
+          if (config.retryDelay === "exponential") {
+            retryDelay = axiosRetry.exponentialDelay;
+          } else if (typeof config.retryDelay === "number") {
+            retryDelay = () => parseInt(config.retryDelay);
+          } else if (typeof config.retryDelay === "function") {
+            retryDelay = config.retryDelay;
+          }
+
+          axiosRetry(client, {
+            ...config,
+            retryCondition: config.retryCondition,
+            retryDelay,
+          });
+          return client.request(signedRequest);
+        }
+
+        return axios(signedRequest);
       }
-
-      return axios(signedRequest);
-    };
-
-    return awsSigV4Client;
+    }
+    if (config.accessKey === undefined || config.secretKey === undefined) {
+      return new awsSigV4Client();
+    }
+    return new awsSigV4Client();
   }
 }
 

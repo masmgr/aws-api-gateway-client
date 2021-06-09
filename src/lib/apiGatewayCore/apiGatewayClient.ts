@@ -19,61 +19,62 @@ import simpleHttpClientFactory from "./simpleHttpClient.js";
 
 class apiGatewayClientFactory {
   static newClient(simpleHttpClientConfig: any, sigV4ClientConfig: any): any {
-    const apiGatewayClient: any = {};
-    // Spin up 2 httpClients, one for simple requests, one for SigV4
-    const sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
-    const simpleHttpClient = simpleHttpClientFactory.newClient(
-      simpleHttpClientConfig
-    );
+    class apiGatewayClient {
+      // Spin up 2 httpClients, one for simple requests, one for SigV4
+      sigV4Client = sigV4ClientFactory.newClient(sigV4ClientConfig);
+      simpleHttpClient = simpleHttpClientFactory.newClient(
+        simpleHttpClientConfig
+      );
 
-    apiGatewayClient.makeRequest = function (
-      request: any,
-      authType: any,
-      additionalParams: any,
-      apiKey: any
-    ) {
-      // Default the request to use the simple http client
-      let clientToUse = simpleHttpClient;
-
-      // Attach the apiKey to the headers request if one was provided
-      if (apiKey !== undefined && apiKey !== "" && apiKey !== null) {
-        request.headers["x-api-key"] = apiKey;
-      }
-
-      if (
-        request.body === undefined ||
-        request.body === "" ||
-        request.body === null ||
-        Object.keys(request.body).length === 0
+      makeRequest(
+        request: any,
+        authType: any,
+        additionalParams: any,
+        apiKey: any
       ) {
-        request.body = undefined;
+        // Default the request to use the simple http client
+        let clientToUse = this.simpleHttpClient;
+
+        // Attach the apiKey to the headers request if one was provided
+        if (apiKey !== undefined && apiKey !== "" && apiKey !== null) {
+          request.headers["x-api-key"] = apiKey;
+        }
+
+        if (
+          request.body === undefined ||
+          request.body === "" ||
+          request.body === null ||
+          Object.keys(request.body).length === 0
+        ) {
+          request.body = undefined;
+        }
+
+        // If the user specified any additional headers or query params that may not have been modeled
+        // merge them into the appropriate request properties
+        request.headers = utils.mergeInto(
+          request.headers,
+          additionalParams.headers
+        );
+        request.queryParams = utils.mergeInto(
+          request.queryParams,
+          additionalParams.queryParams
+        );
+        request.timeout = utils.mergeInto(
+          request.timeout,
+          additionalParams.timeout
+        );
+
+        // If an auth type was specified inject the appropriate auth client
+        if (authType === "AWS_IAM") {
+          clientToUse = this.sigV4Client;
+        }
+
+        // Call the selected http client to make the request,
+        // returning a promise once the request is sent
+        return clientToUse.makeRequest(request);
       }
-
-      // If the user specified any additional headers or query params that may not have been modeled
-      // merge them into the appropriate request properties
-      request.headers = utils.mergeInto(
-        request.headers,
-        additionalParams.headers
-      );
-      request.queryParams = utils.mergeInto(
-        request.queryParams,
-        additionalParams.queryParams
-      );
-      request.timeout = utils.mergeInto(
-        request.timeout,
-        additionalParams.timeout
-      );
-
-      // If an auth type was specified inject the appropriate auth client
-      if (authType === "AWS_IAM") {
-        clientToUse = sigV4Client;
-      }
-
-      // Call the selected http client to make the request,
-      // returning a promise once the request is sent
-      return clientToUse.makeRequest(request);
-    };
-    return apiGatewayClient;
+    }
+    return new apiGatewayClient();
   }
 }
 

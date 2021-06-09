@@ -14,14 +14,18 @@
  */
 
 class utils {
-  static assertDefined(object: any, name: any) {
+  static assertDefined(object: any, name: string) {
     if (object === undefined) {
       throw new Error(`${name} must be defined`);
     } else {
       return object;
     }
   }
-  static assertParametersDefined(params: any, keys: any, ignore: any) {
+  static assertParametersDefined(
+    params: any,
+    keys: string[],
+    ignore: string[]
+  ) {
     if (keys === undefined) {
       return;
     }
@@ -34,7 +38,7 @@ class utils {
       }
     }
   }
-  static parseParametersToObject(params: any, keys: any) {
+  static parseParametersToObject(params: any, keys: string[]) {
     if (params === undefined) {
       return {};
     }
