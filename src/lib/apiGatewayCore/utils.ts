@@ -13,8 +13,12 @@
  * permissions and limitations under the License.
  */
 
+export type Header = any;
+export type QueryParams = any;
+export type Body = any;
+
 class utils {
-  static assertDefined(object: any, name: string) {
+  static assertDefined<T>(object: T | undefined, name: string): T {
     if (object === undefined) {
       throw new Error(`${name} must be defined`);
     } else {
@@ -38,7 +42,10 @@ class utils {
       }
     }
   }
-  static parseParametersToObject(params: any, keys: string[]) {
+  static parseParametersToObject(
+    params: { [key: string]: any },
+    keys: string[]
+  ) {
     if (params === undefined) {
       return {};
     }
@@ -48,7 +55,7 @@ class utils {
     }
     return object;
   }
-  static contains(a: any, obj: any) {
+  static contains(a: any, obj: any): boolean {
     if (a === undefined) {
       return false;
     }
@@ -60,7 +67,7 @@ class utils {
     }
     return false;
   }
-  static copy(obj: any) {
+  static copy(obj: any): any {
     if (null === obj || "object" !== typeof obj) return obj;
     const Buffer = require("buffer").Buffer;
     if (Buffer.isBuffer(obj)) return Buffer.from(obj);

@@ -13,16 +13,53 @@
  * permissions and limitations under the License.
  */
 
-import axios, { AxiosRequestConfig } from "axios";
-import axiosRetry from "axios-retry";
+import axios, {
+  AxiosError,
+  AxiosPromise,
+  AxiosRequestConfig,
+  Method,
+} from "axios";
+import axiosRetry, { IAxiosRetryConfig } from "axios-retry";
 import SHA256 from "crypto-js/sha256";
 import encHex from "crypto-js/enc-hex";
 import HmacSHA256 from "crypto-js/hmac-sha256";
 import urlParser from "url";
 import utils from "./utils";
+import {
+  simpleHttpClient,
+  simpleHttpClientFactoryConfig,
+  simpleHttpClientRequest,
+} from "./simpleHttpClient";
+type WordArray = CryptoJS.lib.WordArray;
+
+export interface awsSigV4ClientFactoryConfig
+  extends simpleHttpClientFactoryConfig {
+  systemClockOffset: string;
+  accessKey: string;
+  secretKey: string;
+  sessionToken: string;
+  serviceName: string;
+  region: string;
+  host: string;
+}
+
+export interface awsSigV4ClientRequest extends simpleHttpClientRequest {}
+
+export interface awsSigV4Client extends simpleHttpClient {
+  accessKey: string;
+  secretKey: string;
+  sessionToken: string;
+  serviceName: string;
+  region: string;
+  retries: number;
+  retryDelay: "exponential" | number | (() => number);
+  retryCondition: (error: AxiosError) => boolean;
+  host: string;
+  makeRequest: (request: awsSigV4ClientRequest) => AxiosPromise<any>;
+}
 
 class sigV4ClientFactory {
-  static newClient(config: any) {
+  static newClient(config: awsSigV4ClientFactoryConfig): awsSigV4Client {
     const AWS_SHA_256 = "AWS4-HMAC-SHA256";
     const AWS4_REQUEST = "aws4_request";
     const AWS4 = "AWS4";
@@ -31,24 +68,24 @@ class sigV4ClientFactory {
     const HOST = "host";
     const AUTHORIZATION = "Authorization";
 
-    function hash(value: any) {
+    function hash(value: string) {
       return SHA256(value); // eslint-disable-line
     }
 
-    function hexEncode(value: any) {
+    function hexEncode(value: WordArray | string) {
       return value.toString(encHex);
     }
 
-    function hmac(secret: any, value: any) {
+    function hmac(secret: WordArray | string, value: WordArray | string) {
       return HmacSHA256(value, secret); // eslint-disable-line
     }
 
     function buildCanonicalRequest(
-      method: any,
-      path: any,
+      method: Method,
+      path: string,
       queryParams: any,
       headers: any,
-      payload: any
+      payload: string
     ) {
       return (
         method +
@@ -65,11 +102,11 @@ class sigV4ClientFactory {
       );
     }
 
-    function hashCanonicalRequest(request: any) {
+    function hashCanonicalRequest(request: string) {
       return hexEncode(hash(request));
     }
 
-    function buildCanonicalUri(uri: any) {
+    function buildCanonicalUri(uri: string) {
       return encodeURI(uri);
     }
 
@@ -79,7 +116,7 @@ class sigV4ClientFactory {
       }
 
       const sortedQueryParams = [];
-      for (let property in queryParams) {
+      for (const property in queryParams) {
         if (Object.prototype.hasOwnProperty.call(queryParams, property)) {
           sortedQueryParams.push(property);
         }
@@ -87,7 +124,7 @@ class sigV4ClientFactory {
       sortedQueryParams.sort();
 
       let canonicalQueryString = "";
-      for (let sortedQueryParam of sortedQueryParams) {
+      for (const sortedQueryParam of sortedQueryParams) {
         canonicalQueryString +=
           sortedQueryParam +
           "=" +
@@ -103,17 +140,17 @@ class sigV4ClientFactory {
       });
     }
 
-    function buildCanonicalHeaders(headers: any) {
+    function buildCanonicalHeaders(headers: { [key: string]: object }) {
       let canonicalHeaders = "";
       const sortedKeys = [];
-      for (let property in headers) {
+      for (const property in headers) {
         if (Object.prototype.hasOwnProperty.call(headers, property)) {
           sortedKeys.push(property);
         }
       }
       sortedKeys.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
-      for (let key of sortedKeys) {
+      for (const key of sortedKeys) {
         canonicalHeaders += key.toLowerCase() + ":" + headers[key] + "\n";
       }
       return canonicalHeaders;
@@ -121,7 +158,7 @@ class sigV4ClientFactory {
 
     function buildCanonicalSignedHeaders(headers: any) {
       const sortedKeys = [];
-      for (let property in headers) {
+      for (const property in headers) {
         if (Object.prototype.hasOwnProperty.call(headers, property)) {
           sortedKeys.push(property.toLowerCase());
         }
@@ -132,9 +169,9 @@ class sigV4ClientFactory {
     }
 
     function buildStringToSign(
-      datetime: any,
-      credentialScope: any,
-      hashedCanonicalRequest: any
+      datetime: string,
+      credentialScope: string,
+      hashedCanonicalRequest: string
     ) {
       return (
         AWS_SHA_256 +
@@ -147,7 +184,11 @@ class sigV4ClientFactory {
       );
     }
 
-    function buildCredentialScope(datetime: any, region: any, service: any) {
+    function buildCredentialScope(
+      datetime: string,
+      region: string,
+      service: string
+    ) {
       return (
         datetime.substr(0, 8) +
         "/" +
@@ -160,10 +201,10 @@ class sigV4ClientFactory {
     }
 
     function calculateSigningKey(
-      secretKey: any,
-      datetime: any,
-      region: any,
-      service: any
+      secretKey: string,
+      datetime: string,
+      region: string,
+      service: string
     ) {
       return hmac(
         hmac(
@@ -174,15 +215,15 @@ class sigV4ClientFactory {
       );
     }
 
-    function calculateSignature(key: any, stringToSign: any) {
+    function calculateSignature(key: any, stringToSign: string) {
       return hexEncode(hmac(key, stringToSign));
     }
 
     function buildAuthorizationHeader(
-      accessKey: any,
-      credentialScope: any,
+      accessKey: string,
+      credentialScope: string,
       headers: any,
-      signature: any
+      signature: string
     ) {
       return (
         AWS_SHA_256 +
@@ -197,19 +238,18 @@ class sigV4ClientFactory {
       );
     }
 
-    class awsSigV4Client {
-      accessKey = utils.assertDefined(config.accessKey, "accessKey");
-      secretKey = utils.assertDefined(config.secretKey, "secretKey");
-      sessionToken = config.sessionToken;
-      serviceName = utils.assertDefined(config.serviceName, "serviceName");
-      region = utils.assertDefined(config.region, "region");
-      endpoint = utils.assertDefined(config.endpoint, "endpoint");
-      retries = config.retries;
-      retryCondition = config.retryCondition;
-      retryDelay = config.retryDelay;
-      host = config.host;
-
-      public makeRequest(request: any): any {
+    return {
+      accessKey: utils.assertDefined(config.accessKey, "accessKey"),
+      secretKey: utils.assertDefined(config.secretKey, "secretKey"),
+      sessionToken: config.sessionToken,
+      serviceName: utils.assertDefined(config.serviceName, "serviceName"),
+      region: utils.assertDefined(config.region, "region"),
+      endpoint: utils.assertDefined(config.endpoint, "endpoint"),
+      retries: config.retries,
+      retryCondition: config.retryCondition,
+      retryDelay: config.retryDelay,
+      host: config.host,
+      makeRequest: function (request: awsSigV4ClientRequest) {
         const verb = utils.assertDefined(request.verb, "verb");
         const path = utils.assertDefined(request.path, "path");
         let queryParams = utils.copy(request.queryParams);
@@ -327,11 +367,11 @@ class sigV4ClientFactory {
           const client = axios.create(signedRequest);
 
           // Allow user configurable delay, or built-in exponential delay
-          let retryDelay: any = () => 0;
+          let retryDelay: (retryNumber: number) => number = () => 0;
           if (config.retryDelay === "exponential") {
             retryDelay = axiosRetry.exponentialDelay;
           } else if (typeof config.retryDelay === "number") {
-            retryDelay = () => parseInt(config.retryDelay);
+            retryDelay = () => config.retryDelay as number;
           } else if (typeof config.retryDelay === "function") {
             retryDelay = config.retryDelay;
           }
@@ -345,12 +385,14 @@ class sigV4ClientFactory {
         }
 
         return axios(signedRequest);
-      }
-    }
+      },
+    };
+    /*
     if (config.accessKey === undefined || config.secretKey === undefined) {
       return new awsSigV4Client();
     }
     return new awsSigV4Client();
+    */
   }
 }
 

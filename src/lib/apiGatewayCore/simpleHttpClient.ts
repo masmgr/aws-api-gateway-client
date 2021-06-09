@@ -13,13 +13,43 @@
  * permissions and limitations under the License.
  */
 
-import axios, { AxiosRequestConfig, Method } from "axios";
-import axiosRetry from "axios-retry";
-import utils from "./utils";
+import axios, {
+  AxiosError,
+  AxiosPromise,
+  AxiosRequestConfig,
+  Method,
+} from "axios";
+import axiosRetry, { IAxiosRetryConfig } from "axios-retry";
+import utils, { QueryParams } from "./utils";
+
+export interface simpleHttpClientFactoryConfig {
+  endpoint: string | undefined;
+  headers: object | undefined;
+  defaultContentType: string | undefined;
+  defaultAcceptType: string | undefined;
+  retries: number;
+  retryDelay: "exponential" | number | (() => number);
+  retryCondition: (error: AxiosError) => boolean;
+}
+
+export interface simpleHttpClientRequest {
+  verb: Method | undefined;
+  path: string | undefined;
+  queryParams: QueryParams;
+  timeout: number | undefined;
+  request: object | undefined;
+  headers: Headers;
+  body: Body;
+}
+
+export interface simpleHttpClient {
+  endpoint: string;
+  makeRequest(request: simpleHttpClientRequest): AxiosPromise<any>;
+}
 
 class simpleHttpClientFactory {
-  static newClient(config: any) {
-    function buildCanonicalQueryString(queryParams: any) {
+  static newClient(config: simpleHttpClientFactoryConfig) {
+    function buildCanonicalQueryString(queryParams: QueryParams) {
       // Build a properly encoded query string from a QueryParam object
       if (Object.keys(queryParams).length < 1) {
         return "";
@@ -39,10 +69,9 @@ class simpleHttpClientFactory {
       return canonicalQueryString.substr(0, canonicalQueryString.length - 1);
     }
 
-    class simpleHttpClient {
-      endpoint = utils.assertDefined(config.endpoint, "endpoint");
-
-      public makeRequest(request: any) {
+    return {
+      endpoint: utils.assertDefined(config.endpoint, "endpoint"),
+      makeRequest: function (request: simpleHttpClientRequest) {
         const verb: Method = utils.assertDefined(request.verb, "verb");
         const path: string = utils.assertDefined(request.path, "path");
         let queryParams = utils.copy(request.queryParams);
@@ -85,11 +114,11 @@ class simpleHttpClientFactory {
           const client = axios.create(simpleHttpRequest);
 
           // Allow user configurable delay, or built-in exponential delay
-          let retryDelay: any = () => 0;
+          let retryDelay: (retryNumber: number) => number = () => 0;
           if (config.retryDelay === "exponential") {
             retryDelay = axiosRetry.exponentialDelay;
           } else if (typeof config.retryDelay === "number") {
-            retryDelay = () => parseInt(config.retryDelay);
+            retryDelay = () => config.retryDelay as number;
           } else if (typeof config.retryDelay === "function") {
             retryDelay = config.retryDelay;
           }
@@ -105,9 +134,8 @@ class simpleHttpClientFactory {
           return client.request(simpleHttpRequest);
         }
         return axios(simpleHttpRequest);
-      }
-    }
-    return new simpleHttpClient();
+      },
+    } as simpleHttpClient;
   }
 }
 
