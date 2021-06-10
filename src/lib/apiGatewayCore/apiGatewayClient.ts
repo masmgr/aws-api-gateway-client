@@ -13,106 +13,106 @@
  * permissions and limitations under the License.
  */
 
-import utils from "./utils";
+import utils from './utils'
 import sigV4ClientFactory, {
-  awsSigV4Client,
-  awsSigV4ClientFactoryConfig,
-} from "./sigV4Client";
+    awsSigV4Client,
+    awsSigV4ClientFactoryConfig,
+} from './sigV4Client'
 import simpleHttpClientFactory, {
-  simpleHttpClient,
-  simpleHttpClientFactoryConfig,
-} from "./simpleHttpClient";
-import { AxiosPromise } from "axios";
+    simpleHttpClient,
+    simpleHttpClientFactoryConfig,
+} from './simpleHttpClient'
+import { AxiosPromise } from 'axios'
 
 export interface apiGatewayClientFactoryConfig
-  extends awsSigV4ClientFactoryConfig {
-  systemClockOffset: string;
-  accessKey: string;
-  secretKey: string;
-  sessionToken: string;
-  serviceName: string;
-  region: string;
-  host: string;
+    extends awsSigV4ClientFactoryConfig {
+    systemClockOffset: string
+    accessKey: string
+    secretKey: string
+    sessionToken: string
+    serviceName: string
+    region: string
+    host: string
 }
 
 export interface apiGatewayClientRequest {
-  request: any;
-  authType: any;
-  additionalParams: any;
-  apiKey: any;
+    request: any
+    authType: any
+    additionalParams: any
+    apiKey: any
 }
 
 export interface apiGatewayClient {
-  sigV4Client: awsSigV4Client;
-  simpleHttpClient: simpleHttpClient;
-  makeRequest: (
-    request: apiGatewayClientRequest,
-    authType: any,
-    additionalParams: any,
-    apiKey: any
-  ) => AxiosPromise<any>;
-}
-
-class apiGatewayClientFactory {
-  static newClient(
-    simpleHttpClientConfig: simpleHttpClientFactoryConfig,
-    sigV4ClientConfig: awsSigV4ClientFactoryConfig
-  ) {
-    return {
-      // Spin up 2 httpClients, one for simple requests, one for SigV4
-      sigV4Client: sigV4ClientFactory.newClient(sigV4ClientConfig),
-      simpleHttpClient: simpleHttpClientFactory.newClient(
-        simpleHttpClientConfig
-      ),
-      makeRequest: function (
-        request: any,
+    sigV4Client: awsSigV4Client
+    simpleHttpClient: simpleHttpClient
+    makeRequest: (
+        request: apiGatewayClientRequest,
         authType: any,
         additionalParams: any,
         apiKey: any
-      ) {
-        // Default the request to use the simple http client
-        let clientToUse = this.simpleHttpClient;
-
-        // Attach the apiKey to the headers request if one was provided
-        if (apiKey !== undefined && apiKey !== "" && apiKey !== null) {
-          request.headers["x-api-key"] = apiKey;
-        }
-
-        if (
-          request.body === undefined ||
-          request.body === "" ||
-          request.body === null ||
-          Object.keys(request.body).length === 0
-        ) {
-          request.body = undefined;
-        }
-
-        // If the user specified any additional headers or query params that may not have been modeled
-        // merge them into the appropriate request properties
-        request.headers = utils.mergeInto(
-          request.headers,
-          additionalParams.headers
-        );
-        request.queryParams = utils.mergeInto(
-          request.queryParams,
-          additionalParams.queryParams
-        );
-        request.timeout = utils.mergeInto(
-          request.timeout,
-          additionalParams.timeout
-        );
-
-        // If an auth type was specified inject the appropriate auth client
-        if (authType === "AWS_IAM") {
-          clientToUse = this.sigV4Client;
-        }
-
-        // Call the selected http client to make the request,
-        // returning a promise once the request is sent
-        return clientToUse.makeRequest(request);
-      },
-    } as apiGatewayClient;
-  }
+    ) => AxiosPromise<any>
 }
 
-export default apiGatewayClientFactory;
+class apiGatewayClientFactory {
+    static newClient(
+        simpleHttpClientConfig: simpleHttpClientFactoryConfig,
+        sigV4ClientConfig: awsSigV4ClientFactoryConfig
+    ) {
+        return {
+            // Spin up 2 httpClients, one for simple requests, one for SigV4
+            sigV4Client: sigV4ClientFactory.newClient(sigV4ClientConfig),
+            simpleHttpClient: simpleHttpClientFactory.newClient(
+                simpleHttpClientConfig
+            ),
+            makeRequest: function (
+                request: any,
+                authType: any,
+                additionalParams: any,
+                apiKey: any
+            ) {
+                // Default the request to use the simple http client
+                let clientToUse = this.simpleHttpClient
+
+                // Attach the apiKey to the headers request if one was provided
+                if (apiKey !== undefined && apiKey !== '' && apiKey !== null) {
+                    request.headers['x-api-key'] = apiKey
+                }
+
+                if (
+                    request.body === undefined ||
+                    request.body === '' ||
+                    request.body === null ||
+                    Object.keys(request.body).length === 0
+                ) {
+                    request.body = undefined
+                }
+
+                // If the user specified any additional headers or query params that may not have been modeled
+                // merge them into the appropriate request properties
+                request.headers = utils.mergeInto(
+                    request.headers,
+                    additionalParams.headers
+                )
+                request.queryParams = utils.mergeInto(
+                    request.queryParams,
+                    additionalParams.queryParams
+                )
+                request.timeout = utils.mergeInto(
+                    request.timeout,
+                    additionalParams.timeout
+                )
+
+                // If an auth type was specified inject the appropriate auth client
+                if (authType === 'AWS_IAM') {
+                    clientToUse = this.sigV4Client
+                }
+
+                // Call the selected http client to make the request,
+                // returning a promise once the request is sent
+                return clientToUse.makeRequest(request)
+            },
+        } as apiGatewayClient
+    }
+}
+
+export default apiGatewayClientFactory

@@ -13,87 +13,87 @@
  * permissions and limitations under the License.
  */
 
-export type Header = any;
-export type QueryParams = any;
-export type Body = any;
+export type Header = any
+export type QueryParams = any
+export type Body = any
 
 class utils {
-  static assertDefined<T>(object: T | undefined, name: string): T {
-    if (object === undefined) {
-      throw new Error(`${name} must be defined`);
-    } else {
-      return object;
+    static assertDefined<T>(object: T | undefined, name: string): T {
+        if (object === undefined) {
+            throw new Error(`${name} must be defined`)
+        } else {
+            return object
+        }
     }
-  }
-  static assertParametersDefined(
-    params: any,
-    keys: string[],
-    ignore: string[]
-  ) {
-    if (keys === undefined) {
-      return;
+    static assertParametersDefined(
+        params: any,
+        keys: string[],
+        ignore: string[]
+    ) {
+        if (keys === undefined) {
+            return
+        }
+        if (keys.length > 0 && params === undefined) {
+            params = {}
+        }
+        for (const key of keys) {
+            if (!utils.contains(ignore, key)) {
+                utils.assertDefined(params[key], key)
+            }
+        }
     }
-    if (keys.length > 0 && params === undefined) {
-      params = {};
+    static parseParametersToObject(
+        params: { [key: string]: any },
+        keys: string[]
+    ) {
+        if (params === undefined) {
+            return {}
+        }
+        const object: any = {}
+        for (const key of keys) {
+            object[key] = params[key]
+        }
+        return object
     }
-    for (const key of keys) {
-      if (!utils.contains(ignore, key)) {
-        utils.assertDefined(params[key], key);
-      }
+    static contains(a: any, obj: any): boolean {
+        if (a === undefined) {
+            return false
+        }
+        let i = a.length
+        while (i--) {
+            if (a[i] === obj) {
+                return true
+            }
+        }
+        return false
     }
-  }
-  static parseParametersToObject(
-    params: { [key: string]: any },
-    keys: string[]
-  ) {
-    if (params === undefined) {
-      return {};
+    static copy(obj: any): any {
+        if (null === obj || 'object' !== typeof obj) return obj
+        const Buffer = require('buffer').Buffer
+        if (Buffer.isBuffer(obj)) return Buffer.from(obj)
+        const copy = obj.constructor()
+        for (const attr in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, attr))
+                copy[attr] = obj[attr]
+        }
+        return copy
     }
-    const object: any = {};
-    for (const key of keys) {
-      object[key] = params[key];
+    static mergeInto(baseObj: any, additionalProps: any) {
+        if (null === baseObj || 'object' !== typeof baseObj) return baseObj
+        const merged = baseObj.constructor()
+        for (const attr in baseObj) {
+            if (Object.prototype.hasOwnProperty.call(baseObj, attr))
+                merged[attr] = baseObj[attr]
+        }
+        if (null == additionalProps || 'object' != typeof additionalProps)
+            return baseObj
+        for (const attr in additionalProps) {
+            if (Object.prototype.hasOwnProperty.call(additionalProps, attr)) {
+                merged[attr] = additionalProps[attr]
+            }
+        }
+        return merged
     }
-    return object;
-  }
-  static contains(a: any, obj: any): boolean {
-    if (a === undefined) {
-      return false;
-    }
-    let i = a.length;
-    while (i--) {
-      if (a[i] === obj) {
-        return true;
-      }
-    }
-    return false;
-  }
-  static copy(obj: any): any {
-    if (null === obj || "object" !== typeof obj) return obj;
-    const Buffer = require("buffer").Buffer;
-    if (Buffer.isBuffer(obj)) return Buffer.from(obj);
-    const copy = obj.constructor();
-    for (const attr in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, attr))
-        copy[attr] = obj[attr];
-    }
-    return copy;
-  }
-  static mergeInto(baseObj: any, additionalProps: any) {
-    if (null === baseObj || "object" !== typeof baseObj) return baseObj;
-    const merged = baseObj.constructor();
-    for (const attr in baseObj) {
-      if (Object.prototype.hasOwnProperty.call(baseObj, attr))
-        merged[attr] = baseObj[attr];
-    }
-    if (null == additionalProps || "object" != typeof additionalProps)
-      return baseObj;
-    for (const attr in additionalProps) {
-      if (Object.prototype.hasOwnProperty.call(additionalProps, attr)) {
-        merged[attr] = additionalProps[attr];
-      }
-    }
-    return merged;
-  }
 }
 
-export default utils;
+export default utils
