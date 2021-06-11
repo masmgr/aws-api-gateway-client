@@ -12,7 +12,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
+declare const Buffer
 export type Header = any
 export type QueryParams = any
 export type Body = any
@@ -69,7 +69,7 @@ class utils {
     }
     static copy(obj: any): any {
         if (null === obj || 'object' !== typeof obj) return obj
-        const Buffer = require('buffer').Buffer
+        // const Buffer = require('buffer').Buffer
         if (Buffer.isBuffer(obj)) return Buffer.from(obj)
         const copy = obj.constructor()
         for (const attr in obj) {

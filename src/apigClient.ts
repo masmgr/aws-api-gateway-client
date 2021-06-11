@@ -47,7 +47,7 @@ export type apigClientFactoryConfig = {
     invokeUrl: string
     service: string
     apiKey: string
-    headers?: object
+    headers?: unknown
 }
 
 class apigClientFactory {

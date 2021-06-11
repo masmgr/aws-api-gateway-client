@@ -24,7 +24,7 @@ import utils, { QueryParams } from './utils'
 
 export interface simpleHttpClientFactoryConfig {
     endpoint: string
-    headers?: object
+    headers?: unknown
     defaultContentType: string
     defaultAcceptType: string
     retries: number
@@ -37,7 +37,7 @@ export interface simpleHttpClientRequest {
     path: string | undefined
     queryParams: QueryParams
     timeout: number | undefined
-    request: object | undefined
+    request: unknown | undefined
     headers: Headers
     body: Body
 }

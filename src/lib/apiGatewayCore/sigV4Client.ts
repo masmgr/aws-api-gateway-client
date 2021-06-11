@@ -145,7 +145,7 @@ class sigV4ClientFactory {
             })
         }
 
-        function buildCanonicalHeaders(headers: { [key: string]: object }) {
+        function buildCanonicalHeaders(headers: { [key: string]: unknown }) {
             let canonicalHeaders = ''
             const sortedKeys = []
             for (const property in headers) {
